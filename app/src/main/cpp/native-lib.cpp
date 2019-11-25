@@ -57,7 +57,6 @@ extern "C" {
         LOGE("c语言方法stringFromJNI 返回字符串：%s", hello.c_str());
         //string.c_str():将C语言string对象转换为出汗字符指针
         //NewStringUTF(const char* bytes):将C语言的字符指针转换为jni的就string对象
-
         struct node node1;
         node1.name = "小明";
         node1.value = 20;
@@ -202,8 +201,8 @@ extern "C" {
         //进程休眠 单位微秒 us
         //每秒钟判断是否在播放
         while (playing) {
-        channel->isPlaying(&playing);
-        usleep(1000 * 1000);
+            playing = channel->isPlaying(&playing);
+            usleep(1000 * 1000);
         }
         goto END;
         //释放资源
