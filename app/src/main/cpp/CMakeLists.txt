@@ -2,9 +2,37 @@
 #cmake的最低版本
 cmake_minimum_required(VERSION 3.4.1)
 
+set(distribution_DIR ../../../../libs)
+
+add_library( fmod
+
+        SHARED
+
+        IMPORTED)
+
+set_target_properties( fmod
+
+        PROPERTIES IMPORTED_LOCATION
+
+        ${distribution_DIR}/${ANDROID_ABI}/libfmod.so)
+
+add_library( fmodL
+
+        SHARED
+
+        IMPORTED)
+
+set_target_properties( fmodL
+
+        PROPERTIES IMPORTED_LOCATION
+
+        ${distribution_DIR}/${ANDROID_ABI}/libfmodL.so)
+
 # 源文件 最终生成的 so
 #add_library(变量名A SHARED B.c)
 add_library( native-lib SHARED native-lib.cpp )
+
+include_directories(src/main/cpp/inc)
 
 #设置动态依赖库2   会从 ndk中的platforms/android-21/arch-arm/usr/lib/  中查找log库 并赋值给log_lib
 find_library( log-lib log )
@@ -13,7 +41,13 @@ find_library( log-lib log )
 # 如果是静态库，需要根据 add_library中设置的变量名B去查找
 # 如果是动态库,需要根据  CMAKE_CXX_FLAGS 改变后的路径下去按照库名查找
 #target_link_libraries( 要生成的库A  依赖的库B  ${log-lib} )
-target_link_libraries( native-lib ${log-lib} )
+target_link_libraries( native-lib
+
+        fmod
+
+        fmodL
+
+        ${log-lib} )
 
 #说明文档
 #cmake的最低版本

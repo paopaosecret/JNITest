@@ -1,8 +1,10 @@
+#include "inc/fmod.hpp"
 #include <jni.h>
 #include <string.h>
 #include <string>
 #include <android/log.h>
 #include "stdio.h"
+#include <unistd.h>
 
 #define MAX(a,b) (a>b) ? a : b
 #define TAG "jnitest" // 这个是自定义的LOG的标识
@@ -11,6 +13,12 @@
 #define LOGW(...) __android_log_print(ANDROID_LOG_WARN,TAG ,__VA_ARGS__) // 定义LOGW类型
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,TAG ,__VA_ARGS__) // 定义LOGE类型
 #define LOGF(...) __android_log_print(ANDROID_LOG_FATAL,TAG ,__VA_ARGS__) // 定义LOGF类型
+#define MODE_NORMAL  0
+#define MODE_LUOLI 1
+#define MODE_DASHU 2
+#define MODE_JINGSONG 3
+#define MODE_GAOGUAI 4
+#define MODE_KONGLING 5
 /**
  * JNIEXPORT:jni方法的函数声明关键字
  * jstring:  函数返回值
@@ -29,6 +37,8 @@ struct node{
 enum week{
     Mon,Tues,Wed,Thurs,Fri,Sat,Sun
 };
+
+
 extern "C" {
     JNIEXPORT jstring JNICALL Java_com_example_utils_JniUtils_stringFromJNI(
             JNIEnv *env,
@@ -103,6 +113,105 @@ extern "C" {
         env->SetByteArrayRegion(array, 0, chars_len, cbytes);
         LOGE("c语言方法convertByte 方法返回");
         return array;
+    }
+
+    JNIEXPORT void JNICALL Java_com_example_utils_JniUtils_playSound(
+            JNIEnv *env, jobject /* this */obj, jstring jpath, jint type) {
+        using namespace FMOD;
+        System *system;
+        Sound *sound;
+        Channel *channel;
+        DSP *dsp;
+        float frequency = 0;
+        bool playing = true;
+
+        //初始化
+        System_Create(&system);
+        //第一个参数是通道 第二个参数是标志 第三个传NULL即可
+        system->init(32, FMOD_INIT_NORMAL, NULL);
+        //将jstring转化为char*
+        const char* path_cstr = env->GetStringUTFChars(jpath, NULL);
+        //创建声音
+        system->createSound(path_cstr, FMOD_DEFAULT, NULL, &sound);
+        //原生播放
+
+        switch (type) {
+            case MODE_NORMAL:
+                //原生播放
+                LOGI("%s", path_cstr);
+                system->playSound(sound, 0, false, &channel);
+                LOGI("%s", "fix normal");
+                break;
+            case MODE_LUOLI:
+                //萝莉
+                //DSP digital signal process
+                //dsp -> 音效
+                //FMOD_DSP_TYPE_PITCH  dsp ，提升或者降低音调用的一种音效
+                // FMOD_DSP_TYPE_PITCHSHIFT 在fmod_dsp_effects.h中
+                system->createDSPByType(FMOD_DSP_TYPE_PITCHSHIFT, &dsp);
+                //设置音调的参数
+                dsp->setParameterFloat(FMOD_DSP_PITCHSHIFT_PITCH, 2.5);
+                system->playSound(sound, 0, false, &channel);
+                //添加到channel
+                channel->addDSP(0, dsp);
+                LOGI("%s", "fix luoli");
+                break;
+
+            case MODE_DASHU:
+                //大叔
+                system->createDSPByType(FMOD_DSP_TYPE_PITCHSHIFT, &dsp);
+                dsp->setParameterFloat(FMOD_DSP_PITCHSHIFT_PITCH, 0.8);
+
+                system->playSound(sound, 0, false, &channel);
+                //添加到channel
+                channel->addDSP(0, dsp);
+                LOGI("%s", "fix dashu");
+                break;
+                break;
+            case MODE_JINGSONG:
+                //惊悚
+                system->createDSPByType(FMOD_DSP_TYPE_TREMOLO, &dsp);
+                dsp->setParameterFloat(FMOD_DSP_TREMOLO_SKEW, 0.5);
+                system->playSound(sound, 0, false, &channel);
+                channel->addDSP(0, dsp);
+                break;
+            case MODE_GAOGUAI:
+                //搞怪
+                //提高说话的速度
+                system->playSound(sound, 0, false, &channel);
+                channel->getFrequency(&frequency);
+                frequency = frequency * 1.6;
+                channel->setFrequency(frequency);
+                LOGI("%s", "fix gaoguai");
+                break;
+            case MODE_KONGLING:
+                //空灵
+                system->createDSPByType(FMOD_DSP_TYPE_ECHO, &dsp);
+                dsp->setParameterFloat(FMOD_DSP_ECHO_DELAY, 300);
+                dsp->setParameterFloat(FMOD_DSP_ECHO_FEEDBACK, 20);
+                system->playSound(sound, 0, false, &channel);
+                channel->addDSP(0, dsp);
+                LOGI("%s", "fix kongling");
+
+                break;
+
+            default:
+                break;
+        }
+        system->update();
+        //进程休眠 单位微秒 us
+        //每秒钟判断是否在播放
+        while (playing) {
+        channel->isPlaying(&playing);
+        usleep(1000 * 1000);
+        }
+        goto END;
+        //释放资源
+        END:
+        env->ReleaseStringUTFChars(jpath,path_cstr);
+        sound->release();
+        system->close();
+        system->release();
     }
 
 }

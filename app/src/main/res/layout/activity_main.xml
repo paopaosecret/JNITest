@@ -38,4 +38,45 @@
         android:layout_height="wrap_content"
         android:text="c语言反转字节数组"/>
 
+    <Button
+        android:id="@+id/btn5"
+        android:layout_marginTop="5dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="原声"/>
+
+    <Button
+        android:id="@+id/btn6"
+        android:layout_marginTop="5dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="萝莉"/>
+
+    <Button
+        android:id="@+id/btn7"
+        android:layout_marginTop="5dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="大叔"/>
+
+    <Button
+        android:id="@+id/btn8"
+        android:layout_marginTop="5dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="搞怪"/>
+
+    <Button
+        android:id="@+id/btn9"
+        android:layout_marginTop="5dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="惊悚"/>
+
+    <Button
+        android:id="@+id/btn10"
+        android:layout_marginTop="5dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="空灵"/>
 </LinearLayout>
