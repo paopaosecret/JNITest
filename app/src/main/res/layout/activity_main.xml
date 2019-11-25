@@ -11,17 +11,31 @@
         android:layout_height="wrap_content"
         android:text="显示结果"/>
     <Button
-        android:id="@+id/btn_string"
+        android:id="@+id/btn1"
         android:layout_marginTop="5dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="获取C字符串"/>
 
     <Button
-        android:id="@+id/btn_add"
+        android:id="@+id/btn2"
         android:layout_marginTop="5dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="计算和"/>
+
+    <Button
+        android:id="@+id/btn3"
+        android:layout_marginTop="5dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="c语言接收JAVAString"/>
+
+    <Button
+        android:id="@+id/btn4"
+        android:layout_marginTop="5dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="c语言反转字节数组"/>
 
 </LinearLayout>
