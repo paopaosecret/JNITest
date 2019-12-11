@@ -61,6 +61,11 @@ extern "C" {
         node1.name = "小明";
         node1.value = 20;
         LOGE("结构体：name：%s,value:%d",node1.name,node1.value);
+
+        struct node *node2;
+        node2->name = "小红";
+        node2->value = 18;
+        LOGE("结构体：name：%s,value:%d",node2->name, node2->value);
         return env->NewStringUTF(hello.c_str());
     }
 
@@ -200,9 +205,9 @@ extern "C" {
         system->update();
         //进程休眠 单位微秒 us
         //每秒钟判断是否在播放
-        while (playing) {
-            playing = channel->isPlaying(&playing);
-            usleep(1000 * 1000);
+        while (1) {
+//            playing = channel->isPlaying(&playing);
+//            usleep(1000 * 1000);
         }
         goto END;
         //释放资源

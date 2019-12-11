@@ -16,7 +16,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     JniUtils jniUtils = new JniUtils();
     private TextView tvShow;
 //    private String path = "file:///android_asset/kill.wav";
-    private String path = "file:///android_asset/123.mp3";
+    private String path = "file:///android_asset/123.m4a";
     private PlayThread playThread = new PlayThread(0);
     private boolean isPlay = false;
 
