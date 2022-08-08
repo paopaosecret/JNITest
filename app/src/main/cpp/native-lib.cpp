@@ -1,4 +1,3 @@
-#include "inc/fmod.hpp"
 #include <jni.h>
 #include <string.h>
 #include <string>
@@ -38,8 +37,10 @@ enum week{
     Mon,Tues,Wed,Thurs,Fri,Sat,Sun
 };
 
-
 extern "C" {
+    /**
+     * ----------------------JAVA 调用 C++-------------------------------
+     */
     JNIEXPORT jstring JNICALL Java_com_example_utils_JniUtils_stringFromJNI(
             JNIEnv *env,
             jobject jobj) {
@@ -55,17 +56,19 @@ extern "C" {
         stu1.value = 10;
         LOGE("结构体：name：%s,value:%d",stu1.name,stu1.value);
         LOGE("c语言方法stringFromJNI 返回字符串：%s", hello.c_str());
-        //string.c_str():将C语言string对象转换为出汗字符指针
+        //string.c_str():将C语言string对象转换为字符指针
         //NewStringUTF(const char* bytes):将C语言的字符指针转换为jni的就string对象
         struct node node1;
         node1.name = "小明";
         node1.value = 20;
         LOGE("结构体：name：%s,value:%d",node1.name,node1.value);
 
-        struct node *node2;
+        //TODO 注意：结构体指针使用之前需要先分配内存
+        struct node *node2 = new struct node();
         node2->name = "小红";
         node2->value = 18;
         LOGE("结构体：name：%s,value:%d",node2->name, node2->value);
+        delete node2;
         return env->NewStringUTF(hello.c_str());
     }
 
@@ -119,103 +122,160 @@ extern "C" {
         return array;
     }
 
-    JNIEXPORT void JNICALL Java_com_example_utils_JniUtils_playSound(
-            JNIEnv *env, jobject /* this */obj, jstring jpath, jint type) {
-        using namespace FMOD;
-        System *system;
-        Sound *sound;
-        Channel *channel;
-        DSP *dsp;
-        float frequency = 0;
-        bool playing = true;
-
-        //初始化
-        System_Create(&system);
-        //第一个参数是通道 第二个参数是标志 第三个传NULL即可
-        system->init(32, FMOD_INIT_NORMAL, NULL);
-        //将jstring转化为char*
-        const char* path_cstr = env->GetStringUTFChars(jpath, NULL);
-        //创建声音
-        system->createSound(path_cstr, FMOD_DEFAULT, NULL, &sound);
-        //原生播放
-
-        switch (type) {
-            case MODE_NORMAL:
-                //原生播放
-                LOGI("%s", path_cstr);
-                system->playSound(sound, 0, false, &channel);
-                LOGI("%s", "fix normal");
-                break;
-            case MODE_LUOLI:
-                //萝莉
-                //DSP digital signal process
-                //dsp -> 音效
-                //FMOD_DSP_TYPE_PITCH  dsp ，提升或者降低音调用的一种音效
-                // FMOD_DSP_TYPE_PITCHSHIFT 在fmod_dsp_effects.h中
-                system->createDSPByType(FMOD_DSP_TYPE_PITCHSHIFT, &dsp);
-                //设置音调的参数
-                dsp->setParameterFloat(FMOD_DSP_PITCHSHIFT_PITCH, 2.5);
-                system->playSound(sound, 0, false, &channel);
-                //添加到channel
-                channel->addDSP(0, dsp);
-                LOGI("%s", "fix luoli");
-                break;
-
-            case MODE_DASHU:
-                //大叔
-                system->createDSPByType(FMOD_DSP_TYPE_PITCHSHIFT, &dsp);
-                dsp->setParameterFloat(FMOD_DSP_PITCHSHIFT_PITCH, 0.8);
-
-                system->playSound(sound, 0, false, &channel);
-                //添加到channel
-                channel->addDSP(0, dsp);
-                LOGI("%s", "fix dashu");
-                break;
-                break;
-            case MODE_JINGSONG:
-                //惊悚
-                system->createDSPByType(FMOD_DSP_TYPE_TREMOLO, &dsp);
-                dsp->setParameterFloat(FMOD_DSP_TREMOLO_SKEW, 0.5);
-                system->playSound(sound, 0, false, &channel);
-                channel->addDSP(0, dsp);
-                break;
-            case MODE_GAOGUAI:
-                //搞怪
-                //提高说话的速度
-                system->playSound(sound, 0, false, &channel);
-                channel->getFrequency(&frequency);
-                frequency = frequency * 1.6;
-                channel->setFrequency(frequency);
-                LOGI("%s", "fix gaoguai");
-                break;
-            case MODE_KONGLING:
-                //空灵
-                system->createDSPByType(FMOD_DSP_TYPE_ECHO, &dsp);
-                dsp->setParameterFloat(FMOD_DSP_ECHO_DELAY, 300);
-                dsp->setParameterFloat(FMOD_DSP_ECHO_FEEDBACK, 20);
-                system->playSound(sound, 0, false, &channel);
-                channel->addDSP(0, dsp);
-                LOGI("%s", "fix kongling");
-
-                break;
-
-            default:
-                break;
+    /**
+     * ----------------------C++ 调用 JAVA-------------------------------
+     */
+     // 调用静态方法： 只需要构造 java类（jclass） 即可，不需要构造 java对象（jobject）
+    JNIEXPORT void JNICALL Java_com_example_utils_JniUtils_testJNIListenerStaticVoid(
+        JNIEnv *env, jobject /* this */obj) {
+        LOGE("c语言方法testJNIListenerStaticVoid 开始执行");
+        // 第一步：查找JAVA类是否存在
+        jclass jni_listener = env->FindClass("com/example/utils/JNIListener");
+        if (jni_listener == NULL) {
+            LOGE("c语言方法 没有找到JNIListener JAVA类");
+            return;
         }
-        system->update();
-        //进程休眠 单位微秒 us
-        //每秒钟判断是否在播放
-        while (1) {
-//            playing = channel->isPlaying(&playing);
-//            usleep(1000 * 1000);
+
+        // 第二步：获取方法 (sig 可以通过javap 获取 例如在目录：JNITest/app/build/intermediates/javac/debug/classes 下，执行 javap -s com.example.utils.JNIListener )
+        jmethodID mtd_static_void = env->GetStaticMethodID(jni_listener, "testStaticVoid", "(Ljava/lang/String;)V");
+        if (mtd_static_void == NULL) {
+            LOGE("c语言方法 没有找到JNIListener JAVA类 的 testStaticVoid方法");
+            return;
         }
-        goto END;
-        //释放资源
-        END:
-        env->ReleaseStringUTFChars(jpath,path_cstr);
-        sound->release();
-        system->close();
-        system->release();
+
+        // 第三部：类 的 方法调用
+        jstring data = env->NewStringUTF("c++ call java:JNIListener 类");
+        if (data == NULL) {
+            LOGE("c语言方法 没有找到JNIListener JAVA类 的 testStaticVoid方法 构造c++ 参数失败");
+            return;
+        }
+        env->CallStaticVoidMethod(jni_listener, mtd_static_void, data);
+
+        // 第四步： 删除引用
+        env->DeleteLocalRef(jni_listener);
+        env->DeleteLocalRef(data);
+        LOGE("c语言方法testJNIListenerStaticVoid 方法返回");
     }
 
+    // 调用成员方法： 需要构造 java类（jclass），还需要构造 java对象（jobject）
+    JNIEXPORT void JNICALL Java_com_example_utils_JniUtils_testJNIListenerVoid(
+            JNIEnv *env, jobject /* this */obj) {
+        LOGE("c语言方法testJNIListenerVoid 开始执行");
+        // 第一步：查找JAVA类是否存在
+        jclass jni_listener = env->FindClass("com/example/utils/JNIListener");
+        if (jni_listener == NULL) {
+            LOGE("c语言方法 没有找到JNIListener JAVA类");
+            return;
+        }
+
+        // 第二步：获取 构造方法 和 成员方法 (sig 可以通过javap 获取 例如在目录：JNITest/app/build/intermediates/javac/debug/classes 下，执行 javap -s com.example.utils.JNIListener )
+        jmethodID mtd_void = env->GetMethodID(jni_listener, "testVoid", "(Ljava/lang/String;)V");
+        jmethodID mtd_init = env->GetMethodID(jni_listener, "<init>", "()V");
+        if (mtd_void == NULL) {
+            LOGE("c语言方法 没有找到JNIListener JAVA类 的 testVoid 方法");
+            return;
+        }
+        if (mtd_init == NULL) {
+            LOGE("c语言方法 没有找到JNIListener JAVA类 的 初始化 方法");
+            return;
+        }
+
+        // 第三部：构造实例对象
+        jobject jni_listener_obj = env->NewObject(jni_listener, mtd_init);
+        if (jni_listener_obj == NULL) {
+            LOGE("c语言方法 JNIListener JAVA类 构造对象失败");
+            return;
+        }
+
+        // 第四部：类 的 方法调用
+        jstring data = env->NewStringUTF("c++ call java:JNIListener 类");
+        if (data == NULL) {
+            LOGE("c语言方法 没有找到JNIListener JAVA类 的 testVoid 方法 构造c++ 参数失败");
+            return;
+        }
+        env->CallVoidMethod(jni_listener_obj, mtd_void, data);
+
+        // 第四步： 删除引用
+        env->DeleteLocalRef(jni_listener);
+        env->DeleteLocalRef(jni_listener_obj);
+        env->DeleteLocalRef(data);
+        LOGE("c语言方法testJNIListenerVoid 方法返回");
+    }
+
+    // 调用静态方法： 只需要构造 java类（jclass） 即可，不需要构造 java对象（jobject）
+    JNIEXPORT void JNICALL Java_com_example_utils_JniUtils_testJNIListenerStaticInt(
+            JNIEnv *env, jobject /* this */obj) {
+        LOGE("c语言方法testJNIListenerStaticInt 开始执行");
+        // 第一步：查找JAVA类是否存在
+        jclass jni_listener = env->FindClass("com/example/utils/JNIListener");
+        if (jni_listener == NULL) {
+            LOGE("c语言方法 没有找到JNIListener JAVA类");
+            return;
+        }
+
+        // 第二步：获取方法 (sig 可以通过javap 获取 例如在目录：JNITest/app/build/intermediates/javac/debug/classes 下，执行 javap -s com.example.utils.JNIListener )
+        jmethodID mtd_static_int = env->GetStaticMethodID(jni_listener, "testStaticInt", "(II)I");
+        if (mtd_static_int == NULL) {
+            LOGE("c语言方法 没有找到JNIListener JAVA类 的 testStaticInt 方法");
+            return;
+        }
+
+        // 第三部：类 的 方法调用
+        jstring data = env->NewStringUTF("c++ call java:JNIListener 类");
+        if (data == NULL) {
+            LOGE("c语言方法 没有找到JNIListener JAVA类 的 testStaticInt 方法 构造c++ 参数失败");
+            return;
+        }
+        env->CallStaticIntMethod(jni_listener, mtd_static_int, 1, 2);
+
+        // 第四步： 删除引用
+        env->DeleteLocalRef(jni_listener);
+        env->DeleteLocalRef(data);
+        LOGE("c语言方法testJNIListenerStaticInt 方法返回");
+    }
+
+    // 调用成员方法： 需要构造 java类（jclass），还需要构造 java对象（jobject）
+    JNIEXPORT void JNICALL Java_com_example_utils_JniUtils_testJNIListenerInt(
+            JNIEnv *env, jobject /* this */obj) {
+        LOGE("c语言方法testJNIListenerInt 开始执行");
+        // 第一步：查找JAVA类是否存在
+        jclass jni_listener = env->FindClass("com/example/utils/JNIListener");
+        if (jni_listener == NULL) {
+            LOGE("c语言方法 没有找到JNIListener JAVA类");
+            return;
+        }
+
+        // 第二步：获取 构造方法 和 成员方法 (sig 可以通过javap 获取 例如在目录：JNITest/app/build/intermediates/javac/debug/classes 下，执行 javap -s com.example.utils.JNIListener )
+        jmethodID mtd_int = env->GetMethodID(jni_listener, "testInt", "(II)I");
+        jmethodID mtd_init = env->GetMethodID(jni_listener, "<init>", "()V");
+        if (mtd_int == NULL) {
+            LOGE("c语言方法 没有找到JNIListener JAVA类 的 testInt 方法");
+            return;
+        }
+        if (mtd_init == NULL) {
+            LOGE("c语言方法 没有找到JNIListener JAVA类 的 初始化 方法");
+            return;
+        }
+
+        // 第三部：构造实例对象
+        jobject jni_listener_obj = env->NewObject(jni_listener, mtd_init);
+        if (jni_listener_obj == NULL) {
+            LOGE("c语言方法 JNIListener JAVA类 构造对象失败");
+            return;
+        }
+
+        // 第四部：类 的 方法调用
+        jstring data = env->NewStringUTF("c++ call java:JNIListener 类");
+        if (data == NULL) {
+            LOGE("c语言方法 没有找到JNIListener JAVA类 的 testVoid 方法 构造c++ 参数失败");
+            return;
+        }
+        env->CallIntMethod(jni_listener_obj, mtd_int, 1, 2);
+
+        // 第四步： 删除引用
+        env->DeleteLocalRef(jni_listener);
+        env->DeleteLocalRef(jni_listener_obj);
+        env->DeleteLocalRef(data);
+        LOGE("c语言方法testJNIListenerInt 方法返回");
+    }
 }

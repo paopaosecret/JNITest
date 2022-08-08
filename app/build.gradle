@@ -13,8 +13,7 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags ""
-                //指定需要编译的cpu架构abiFilters "armeabi","armeabi-v7a","arm64-v8a","x86","x86_64","mips","mips64"
-                abiFilters "armeabi-v7a","arm64-v8a","x86","x86_64"
+                abiFilters  "armeabi-v7a","arm64-v8a"
             }
         }
     }
@@ -27,7 +26,7 @@ android {
     externalNativeBuild {
         cmake {
             path "src/main/cpp/CMakeLists.txt"
-            version "3.10.2"
+            version "3.6.0"
         }
     }
     sourceSets {
